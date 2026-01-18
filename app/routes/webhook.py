@@ -29,7 +29,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
-    # Idempotency using Redis
     r = None
     try:
         r = get_redis_client()
@@ -44,7 +43,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             return {"status": "duplicate_ignored"}
         r.setex(key, 60 * 60 * 24, "1")  # 24 hours
 
-    # Handle event
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         session_id = session.get("id")
@@ -58,10 +56,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         if not user:
             return {"status": "user_not_found"}
 
-        # Mark paid
         user.is_paid = True
 
-        # Store subscription record (avoid duplicate session_id)
         existing_sub = db.query(Subscription).filter(Subscription.stripe_session_id == session_id).first()
         if not existing_sub:
             sub = Subscription(

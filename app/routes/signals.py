@@ -30,7 +30,6 @@ def get_signals(
 ):
     r = safe_get_redis()
 
-    # Try cache
     signals = None
     if r:
         try:
@@ -40,7 +39,6 @@ def get_signals(
         except Exception:
             signals = None
 
-    # If no cache -> generate
     if not signals:
         signals = generate_mock_signals()
         if r:
